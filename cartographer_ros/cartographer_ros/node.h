@@ -163,7 +163,7 @@ class Cartographer : public rclcpp::Node
   bool ValidateTopicNames(const ::cartographer_ros_msgs::msg::SensorTopics& topics,
                           const TrajectoryOptions& options);
   cartographer_ros_msgs::msg::StatusResponse FinishTrajectoryUnderLock(
-      int trajectory_id) REQUIRES(mutex_);
+      int trajectory_id) EXCLUSIVE_LOCKS_REQUIRED(mutex_);
 
   const NodeOptions node_options_;
 
@@ -171,7 +171,7 @@ class Cartographer : public rclcpp::Node
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
 
-  cartographer::common::Mutex mutex_;
+  absl::Mutex mutex_;
   std::shared_ptr<MapBuilderBridge> map_builder_bridge_ GUARDED_BY(mutex_);
 
   ::rclcpp::Node::SharedPtr node_handle_;

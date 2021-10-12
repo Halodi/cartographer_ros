@@ -133,7 +133,7 @@ int MapBuilderBridge::AddTrajectory(
   // Make sure there is no trajectory with 'trajectory_id' yet.
   CHECK_EQ(sensor_bridges_.count(trajectory_id), 0);
   sensor_bridges_[trajectory_id] =
-      std::unique_ptr<SensorBridge>(
+      std::make_unique<SensorBridge>(
           trajectory_options.num_subdivisions_per_laser_scan,
           trajectory_options.tracking_frame,
           node_options_.lookup_transform_timeout_sec, tf_buffer_,
@@ -160,7 +160,7 @@ void MapBuilderBridge::RunFinalOptimization() {
 
 bool MapBuilderBridge::SerializeState(const std::string& filename) {
   cartographer::io::ProtoStreamWriter writer(filename);
-  map_builder_->SerializeState(&writer);
+  map_builder_->SerializeState(true, &writer);
   return writer.Close();
 }
 
@@ -231,7 +231,7 @@ MapBuilderBridge::GetTrajectoryStates() {
 
     std::shared_ptr<const TrajectoryState::LocalSlamData> local_slam_data;
     {
-      cartographer::common::MutexLocker lock(&mutex_);
+      absl::MutexLock lock(&mutex_);
       if (trajectory_state_data_.count(trajectory_id) == 0) {
         continue;
       }
@@ -502,7 +502,7 @@ void MapBuilderBridge::OnLocalSlamResult(
       std::make_shared<TrajectoryState::LocalSlamData>(
           TrajectoryState::LocalSlamData{time, local_pose,
                                          std::move(range_data_in_local)});
-  cartographer::common::MutexLocker lock(&mutex_);
+  absl::MutexLock lock(&mutex_);
   trajectory_state_data_[trajectory_id] = std::move(local_slam_data);
 }
 

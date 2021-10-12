@@ -21,6 +21,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <mutex>
 
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
@@ -81,7 +82,7 @@ class MapBuilderBridge {
   std::set<int> GetFrozenTrajectoryIds();
   cartographer_ros_msgs::msg::SubmapList GetSubmapList(::rclcpp::Time node_time);
   std::unordered_map<int, TrajectoryState> GetTrajectoryStates()
-      EXCLUDES(mutex_);
+      LOCKS_EXCLUDED(mutex_);
   visualization_msgs::msg::MarkerArray GetTrajectoryNodeList(::rclcpp::Time node_time);
   visualization_msgs::msg::MarkerArray GetLandmarkPosesList(::rclcpp::Time node_time);
   visualization_msgs::msg::MarkerArray GetConstraintList(::rclcpp::Time node_time);
@@ -95,9 +96,9 @@ class MapBuilderBridge {
       ::cartographer::sensor::RangeData range_data_in_local,
       const std::unique_ptr<const ::cartographer::mapping::
                                 TrajectoryBuilderInterface::InsertionResult>
-          insertion_result) EXCLUDES(mutex_);
+          insertion_result) LOCKS_EXCLUDED(mutex_);
 
-  cartographer::common::Mutex mutex_;
+  absl::Mutex mutex_;
   const NodeOptions node_options_;
   std::unordered_map<int, std::shared_ptr<const TrajectoryState::LocalSlamData>>
       trajectory_state_data_ GUARDED_BY(mutex_);

@@ -52,7 +52,7 @@ void Run() {
       LoadOptions(FLAGS_configuration_directory, FLAGS_configuration_basename);
 
   auto map_builder =
-      cartographer::common::make_unique<cartographer::mapping::MapBuilder>(
+      std::make_unique<cartographer::mapping::MapBuilder>(
           node_options.map_builder_options);
 
   auto node = std::make_shared<cartographer_ros::Cartographer>(node_options, std::move(map_builder));

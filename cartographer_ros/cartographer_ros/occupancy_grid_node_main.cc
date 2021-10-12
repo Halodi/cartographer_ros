@@ -21,7 +21,6 @@
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cairo/cairo.h"
-#include "cartographer/common/mutex.h"
 #include "cartographer/common/port.h"
 #include "cartographer/io/image.h"
 #include "cartographer/io/submap_painter.h"
@@ -70,7 +69,7 @@ class OccupancyGridNode : public rclcpp::Node
     auto handleSubmapList =
       [this](const typename cartographer_ros_msgs::msg::SubmapList::SharedPtr msg) -> void
       {
-        ::cartographer::common::MutexLocker locker(&mutex_);
+        absl::MutexLock locker(&mutex_);
 
           // We do not do any work if nobody listens.
           if (this->count_publishers(kSubmapListTopic) == 0){
@@ -156,7 +155,7 @@ class OccupancyGridNode : public rclcpp::Node
       return;
     }
 
-    ::cartographer::common::MutexLocker locker(&mutex_);
+    absl::MutexLock locker(&mutex_);
     auto painted_slices = PaintSubmapSlices(submap_slices_, resolution_);
     std::unique_ptr<nav_msgs::msg::OccupancyGrid> msg_ptr = CreateOccupancyGridMsg(
         painted_slices, resolution_, last_frame_id_, last_timestamp_);
@@ -167,7 +166,7 @@ class OccupancyGridNode : public rclcpp::Node
  private:
   const double resolution_;
 
-  ::cartographer::common::Mutex mutex_;
+  absl::Mutex mutex_;
   ::rclcpp::Client<cartographer_ros_msgs::srv::SubmapQuery>::SharedPtr client_ GUARDED_BY(mutex_);
   ::rclcpp::Subscription<cartographer_ros_msgs::msg::SubmapList>::SharedPtr submap_list_subscriber_ GUARDED_BY(mutex_);
   ::rclcpp::Publisher<::nav_msgs::msg::OccupancyGrid>::SharedPtr occupancy_grid_publisher_ GUARDED_BY(mutex_);

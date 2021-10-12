@@ -46,7 +46,7 @@ NodeOptions CreateNodeOptions(
 std::tuple<NodeOptions, TrajectoryOptions> LoadOptions(
     const std::string& configuration_directory,
     const std::string& configuration_basename) {
-  auto file_resolver = cartographer::common::make_unique<
+  auto file_resolver = std::make_unique<
       cartographer::common::ConfigurationFileResolver>(
       std::vector<std::string>{configuration_directory});
   const std::string code =

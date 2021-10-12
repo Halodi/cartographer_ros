@@ -18,8 +18,8 @@
 #define CARTOGRAPHER_ROS_CARTOGRAPHER_ROS_SENSOR_BRIDGE_H
 
 #include <memory>
+#include <absl/types/optional.h>
 
-#include "cartographer/common/optional.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
@@ -91,7 +91,7 @@ class SensorBridge {
   const TfBridge tf_bridge_;
   ::cartographer::mapping::TrajectoryBuilderInterface* const trajectory_builder_;
 
-  ::cartographer::common::optional<::cartographer::transform::Rigid3d>
+  absl::optional<::cartographer::transform::Rigid3d>
       ecef_to_local_frame_;
 };
 

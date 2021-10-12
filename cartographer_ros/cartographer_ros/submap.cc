@@ -16,7 +16,6 @@
 
 #include "cartographer_ros/submap.h"
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer/common/port.h"
 #include "cartographer/transform/transform.h"
 #include "cartographer_ros/msg_conversion.h"
@@ -27,7 +26,7 @@ namespace cartographer_ros {
 
 std::unique_ptr<::cartographer::io::SubmapTextures> FetchSubmapTextures(
     std::shared_ptr<::cartographer_ros_msgs::srv::SubmapQuery::Response> result){
-  auto response = ::cartographer::common::make_unique<::cartographer::io::SubmapTextures>();
+  auto response = std::make_unique<::cartographer::io::SubmapTextures>();
   response->version = result->submap_version;
   for (const auto& texture : result->textures) {
     const std::string compressed_cells(texture.cells.begin(),

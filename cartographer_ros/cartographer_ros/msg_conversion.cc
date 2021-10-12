@@ -118,9 +118,9 @@ LaserScanToPointCloudWithIntensities(const LaserMessageType& msg) {
       const float first_echo = GetFirstEcho(echoes);
       if (msg.range_min <= first_echo && first_echo <= msg.range_max) {
         const Eigen::AngleAxisf rotation(angle, Eigen::Vector3f::UnitZ());
-        Eigen::Vector4f point;
-        point << rotation * (first_echo * Eigen::Vector3f::UnitX()),
-            i * msg.time_increment;
+        cartographer::sensor::TimedRangefinderPoint point;
+        point.position = rotation * (first_echo * Eigen::Vector3f::UnitX());
+        point.time = i * msg.time_increment;
         point_cloud.points.push_back(point);
         if (msg.intensities.size() > 0) {
           CHECK_EQ(msg.intensities.size(), msg.ranges.size());
@@ -136,10 +136,10 @@ LaserScanToPointCloudWithIntensities(const LaserMessageType& msg) {
   }
   ::cartographer::common::Time timestamp = FromRos(msg.header.stamp);
   if (!point_cloud.points.empty()) {
-    const double duration = point_cloud.points.back()[3];
+    const double duration = point_cloud.points.back().time;
     timestamp += cartographer::common::FromSeconds(duration);
-    for (Eigen::Vector4f& point : point_cloud.points) {
-      point[3] -= duration;
+    for (auto& point : point_cloud.points) {
+      point.time -= duration;
     }
   }
   return std::make_tuple(point_cloud, timestamp);
@@ -165,9 +165,9 @@ sensor_msgs::msg::PointCloud2 ToPointCloud2Message(
   size_t offset = 0;
   float * const data = reinterpret_cast<float*>(&msg.data[0]);
   for (const auto& point : point_cloud) {
-    data[offset++] = point.x();
-    data[offset++] = point.y();
-    data[offset++] = point.z();
+    data[offset++] = point.position[0];
+    data[offset++] = point.position[1];
+    data[offset++] = point.position[2];
     data[offset++] = kPointCloudComponentFourMagic;
   }
 
@@ -196,7 +196,8 @@ ToPointCloudWithIntensities(const sensor_msgs::msg::PointCloud2& message) {
     pcl::PointCloud<pcl::PointXYZI> pcl_point_cloud;
     pcl::fromROSMsg(message, pcl_point_cloud);
     for (const auto& point : pcl_point_cloud) {
-      point_cloud.points.emplace_back(point.x, point.y, point.z, 0.f);
+      cartographer::sensor::TimedRangefinderPoint pt_ { Eigen::Vector3f(point.x, point.y, point.z), 0.f };
+      point_cloud.points.push_back(pt_);
       point_cloud.intensities.push_back(point.intensity);
     }
   } else {
@@ -206,7 +207,8 @@ ToPointCloudWithIntensities(const sensor_msgs::msg::PointCloud2& message) {
     // If we don't have an intensity field, just copy XYZ and fill in
     // 1.0.
     for (const auto& point : pcl_point_cloud) {
-      point_cloud.points.emplace_back(point.x, point.y, point.z, 0.f);
+      cartographer::sensor::TimedRangefinderPoint pt_ { Eigen::Vector3f(point.x, point.y, point.z), 0.f };
+      point_cloud.points.push_back(pt_);
       point_cloud.intensities.push_back(1.0);
     }
   }
@@ -309,8 +311,7 @@ std::unique_ptr<nav_msgs::msg::OccupancyGrid> CreateOccupancyGridMsg(
     const cartographer::io::PaintSubmapSlicesResult& painted_slices,
     const double resolution, const std::string& frame_id,
     const builtin_interfaces::msg::Time& time) {
-  auto occupancy_grid =
-      ::cartographer::common::make_unique<nav_msgs::msg::OccupancyGrid>();
+  auto occupancy_grid = std::make_unique<nav_msgs::msg::OccupancyGrid>();
 
   const int width = cairo_image_surface_get_width(painted_slices.surface.get());
   const int height =

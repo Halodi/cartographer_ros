@@ -22,7 +22,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "cartographer/common/mutex.h"
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/proto/trajectory_builder_options.pb.h"
 #include "cartographer/mapping/trajectory_builder_interface.h"

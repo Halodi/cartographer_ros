@@ -16,7 +16,6 @@
 
 #include "cartographer_ros/sensor_bridge.h"
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer_ros/msg_conversion.h"
 #include "cartographer_ros/time_conversion.h"
 
@@ -56,7 +55,7 @@ std::unique_ptr<carto::sensor::OdometryData> SensorBridge::ToOdometryData(
   if (sensor_to_tracking == nullptr) {
     return nullptr;
   }
-  return carto::common::make_unique<carto::sensor::OdometryData>(
+  return std::make_unique<carto::sensor::OdometryData>(
       carto::sensor::OdometryData{
           time, ToRigid3d(msg->pose.pose) * sensor_to_tracking->inverse()});
 }
@@ -78,7 +77,7 @@ void SensorBridge::HandleNavSatFixMessage(
   if (msg->status.status == sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX) {
     trajectory_builder_->AddSensorData(
         sensor_id, carto::sensor::FixedFramePoseData{
-                       time, carto::common::optional<Rigid3d>()});
+                       time, absl::optional<Rigid3d>()});
     return;
   }
 
@@ -92,7 +91,7 @@ void SensorBridge::HandleNavSatFixMessage(
   trajectory_builder_->AddSensorData(
       sensor_id,
       carto::sensor::FixedFramePoseData{
-          time, carto::common::optional<Rigid3d>(Rigid3d::Translation(
+          time, absl::optional<Rigid3d>(Rigid3d::Translation(
                     ecef_to_local_frame_.value() *
                     LatLongAltToEcef(msg->latitude, msg->longitude,
                                      msg->altitude)))});
@@ -127,7 +126,7 @@ std::unique_ptr<carto::sensor::ImuData> SensorBridge::ToImuData(
       << "The IMU frame must be colocated with the tracking frame. "
          "Transforming linear acceleration into the tracking frame will "
          "otherwise be imprecise.";
-  return ::cartographer::common::make_unique<::cartographer::sensor::ImuData>(
+  return std::make_unique<::cartographer::sensor::ImuData>(
       ::cartographer::sensor::ImuData{
           time,
           sensor_to_tracking->rotation() * ToEigen(msg->linear_acceleration),
@@ -184,7 +183,7 @@ void SensorBridge::HandleLaserScan(
   if (points.points.empty()) {
     return;
   }
-  CHECK_LE(points.points.back()[3], 0);
+  CHECK_LE(points.points.back().time, 0);
   // TODO(gaschler): Use per-point time instead of subdivisions.
   for (int i = 0; i != num_subdivisions_per_laser_scan_; ++i) {
     const size_t start_index =
@@ -196,7 +195,7 @@ void SensorBridge::HandleLaserScan(
     if (start_index == end_index) {
       continue;
     }
-    const double time_to_subdivision_end = subdivision.back()[3];
+    const double time_to_subdivision_end = subdivision.back().time;
     // `subdivision_time` is the end of the measurement so sensor::Collator will
     // send all other sensor data first.
     const carto::common::Time subdivision_time =
@@ -211,10 +210,10 @@ void SensorBridge::HandleLaserScan(
       continue;
     }
     sensor_to_previous_subdivision_time_[sensor_id] = subdivision_time;
-    for (Eigen::Vector4f& point : subdivision) {
-      point[3] -= time_to_subdivision_end;
+    for (auto& point : subdivision) {
+      point.time -= time_to_subdivision_end;
     }
-    CHECK_EQ(subdivision.back()[3], 0);
+    CHECK_EQ(subdivision.back().time, 0);
     HandleRangefinder(sensor_id, subdivision_time, frame_id, subdivision);
   }
 }
@@ -229,7 +228,7 @@ void SensorBridge::HandleRangefinder(
         sensor_id, carto::sensor::TimedPointCloudData{
                        time, sensor_to_tracking->translation().cast<float>(),
                        carto::sensor::TransformTimedPointCloud(
-                           ranges, sensor_to_tracking->cast<float>())});
+                           ranges, sensor_to_tracking->cast<float>()), std::vector<float>() });
   }
 }
 

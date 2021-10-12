@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "cartographer/common/fixed_ratio_sampler.h"
-#include "cartographer/common/mutex.h"
 #include "cartographer/mapping/map_builder_interface.h"
 #include "cartographer/mapping/pose_extrapolator.h"
 #include "cartographer_ros/map_builder_bridge.h"

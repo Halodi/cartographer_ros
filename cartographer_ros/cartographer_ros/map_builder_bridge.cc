@@ -16,7 +16,6 @@
 
 #include "cartographer_ros/map_builder_bridge.h"
 
-#include "cartographer/common/make_unique.h"
 #include "cartographer/io/color.h"
 #include "cartographer/io/proto_stream.h"
 #include "cartographer/mapping/pose_graph.h"
@@ -134,7 +133,7 @@ int MapBuilderBridge::AddTrajectory(
   // Make sure there is no trajectory with 'trajectory_id' yet.
   CHECK_EQ(sensor_bridges_.count(trajectory_id), 0);
   sensor_bridges_[trajectory_id] =
-      cartographer::common::make_unique<SensorBridge>(
+      std::unique_ptr<SensorBridge>(
           trajectory_options.num_subdivisions_per_laser_scan,
           trajectory_options.tracking_frame,
           node_options_.lookup_transform_timeout_sec, tf_buffer_,

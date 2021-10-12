@@ -16,13 +16,13 @@
 # limitations under the License.
 
 import rclpy
-from rclpy import publisher
 from rclpy.node import Node
 from tf2_msgs.msg import TFMessage
 
 class TFRemoveFrames(Node):
     def __init__(self):
         super().__init__('tf_remove_frames')
+
         self._subscriber = self.create_subscription('/tf_in', TFMessage, self.cb, 10)
         self._publisher = self.create_publisher('/tf_out', TFMessage, 1)
 
@@ -30,12 +30,12 @@ class TFRemoveFrames(Node):
         self._remove_frames = self.get_parameter('remove_frames')
 
     def cb(self, msg):
-      transforms_ = []
-      for t in msg.transforms:
-        if t.header.frame_id.lstrip('/') not in self._remove_frames and t.child_frame_id.lstrip('/') not in self._remove_frames:
-          transforms_.append(t)
+        transforms_ = []
+        for t in msg.transforms:
+            if t.header.frame_id.lstrip('/') not in self._remove_frames and t.child_frame_id.lstrip('/') not in self._remove_frames:
+              transforms_.append(t)
 
-      self._publisher.publish(TFMessage(transforms=transforms_))
+        self._publisher.publish(TFMessage(transforms=transforms_))
 
 
 def main(args=None):

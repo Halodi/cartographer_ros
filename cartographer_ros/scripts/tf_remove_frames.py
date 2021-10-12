@@ -15,26 +15,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import rospy
-from tf.msg import tfMessage
+import rclpy
+from rclpy import publisher
+from rclpy.node import Node
+from tf2_msgs.msg import TFMessage
+
+class TFRemoveFrames(Node):
+    def __init__(self):
+        super().__init__('tf_remove_frames')
+        self._subscriber = self.create_subscription('/tf_in', TFMessage, self.cb, 10)
+        self._publisher = self.create_publisher('/tf_out', TFMessage, 1)
+
+        self.declare_parameter('remove_frames')
+        self._remove_frames = self.get_parameter('remove_frames')
+
+    def cb(self, msg):
+      transforms_ = []
+      for t in msg.transforms:
+        if t.header.frame_id.lstrip('/') not in self._remove_frames and t.child_frame_id.lstrip('/') not in self._remove_frames:
+          transforms_.append(t)
+
+      self._publisher.publish(TFMessage(transforms=transforms_))
 
 
-def main():
-  rospy.init_node('tf_remove_frames')
-  publisher = rospy.Publisher('/tf_out', tfMessage, queue_size=1)
-  remove_frames = rospy.get_param('~remove_frames', [])
-
-  def callback(msg):
-    msg.transforms = [
-        t for t in msg.transforms
-        if t.header.frame_id.lstrip('/') not in remove_frames and
-        t.child_frame_id.lstrip('/') not in remove_frames
-    ]
-    publisher.publish(msg)
-
-  rospy.Subscriber('/tf_in', tfMessage, callback)
-  rospy.spin()
+def main(args=None):
+    rclpy.init(args=args)
+    tf_rf_ = TFRemoveFrames()
+    rclpy.spin(tf_rf_)
+    tf_rf_.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == '__main__':
-  main()
+    main()

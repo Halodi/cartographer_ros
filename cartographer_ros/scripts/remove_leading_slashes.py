@@ -18,8 +18,6 @@
 
 import argparse
 import os
-import rosbag
-
 
 def ParseArgs():
   argument_parser = argparse.ArgumentParser(
@@ -41,6 +39,8 @@ def RewriteMsg(msg):
 
 
 def Main():
+  import rosbag
+
   options = ParseArgs()
   with rosbag.Bag(os.path.splitext(options.input)[0] + ".filtered.bag",
                   "w") as outbag:

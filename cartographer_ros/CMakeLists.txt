@@ -159,12 +159,17 @@ install(TARGETS
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin)
 
+  
+
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
   scripts/remove_leading_slashes.py
   scripts/tf_remove_frames.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY configuration_files DESTINATION share/${PROJECT_NAME})
 
 # # Install source headers.
 # file(GLOB_RECURSE HDRS "*.h")

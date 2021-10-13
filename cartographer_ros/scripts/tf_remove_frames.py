@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # Copyright 2016 The Cartographer Authors
@@ -23,11 +23,12 @@ class TFRemoveFrames(Node):
     def __init__(self):
         super().__init__('tf_remove_frames')
 
-        self._subscriber = self.create_subscription('/tf_in', TFMessage, self.cb, 10)
-        self._publisher = self.create_publisher('/tf_out', TFMessage, 1)
+        self._subscriber = self.create_subscription(TFMessage, '/tf_in', self.cb, 10)
+        self._publisher = self.create_publisher(TFMessage, '/tf_out', 10)
 
-        self.declare_parameter('remove_frames')
-        self._remove_frames = self.get_parameter('remove_frames')
+        remove_frames_param_name_ = 'remove_frames'
+        self.declare_parameter(remove_frames_param_name_, [])
+        self._remove_frames = self.get_parameter(remove_frames_param_name_).value
 
     def cb(self, msg):
         transforms_ = []
